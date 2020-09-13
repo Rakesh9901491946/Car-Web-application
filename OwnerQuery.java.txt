@@ -1,0 +1,46 @@
+@Named(value = "ownerQuery")
+@RequestScoped
+public class OwnerQuery {
+
+  @Inject
+  private Database database;
+  private String vin;
+  private Car car;
+  private List<String> ownerList;
+  private String errorMessage;
+
+  public OwnerQuery() {
+    vin = "";
+  }
+
+  public String getVin() {
+    return vin;
+  }
+
+  public void setVin(String vin) {
+    this.vin = vin;
+  }
+
+  public Car getCar() {
+    return car;
+  public List<String> getOwnerList() {
+    return ownerList;
+  }
+
+  public String getErrorMessage() {
+    return errorMessage;
+  }
+
+  public String ownerListAction() {
+    try {
+      car = database.getCar(vin);
+      ownerList = database.getOwnerList(vin);
+      return "owners";
+    } catch (Exception ex) {
+      errorMessage = ex.getMessage();
+      return "error";
+    }
+  }
+
+}
+

@@ -1,0 +1,87 @@
+package cars;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.Resource;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Named;
+import javax.sql.DataSource;
+import sql.SQL;
+
+@Named(value = "database")
+@ApplicationScoped
+public class Database {
+
+  @Resource(name = "jdbc/cars")
+  private DataSource carsSource;
+
+  private List<String> buildList(ResultSet resultSet, String columnName)
+      throws SQLException {
+    List<String> list = new ArrayList<String>();
+    while (resultSet.next()) {
+      list.add(resultSet.getString(columnName));
+    }
+    return list;
+  }
+
+  private Car buildCar(ResultSet resultSet)
+      throws SQLException {
+    resultSet.next();
+    String vin = resultSet.getString("VIN");
+    String manufacturer = resultSet.getString("manufacturer");
+    String model = resultSet.getString("model");
+    return new Car(vin, manufacturer, model);
+  }
+
+  public Database() {
+  }
+
+  public List<String> getVinList()
+      throws SQLException, IOException {
+    Connection carsConnection = carsSource.getConnection();
+    try {
+      Statement statement = carsConnection.createStatement();
+      ResultSet resultSet = statement.executeQuery(SQL.getSQL("vin-query"));
+      return buildList(resultSet, "VIN");
+    } finally {
+      carsConnection.close();
+    }
+  }
+
+  public Car getCar(String vin)
+      throws SQLException, IOException{
+    String query = SQL.getSQL("car-query");
+    Connection carsConnection = carsSource.getConnection();
+    try {
+      PreparedStatement statement =
+          carsConnection.prepareStatement(query);
+      statement.setString(1, vin);
+      ResultSet resultSet = statement.executeQuery();
+      return buildCar(resultSet);
+    } finally {
+      carsConnection.close();
+    }
+  }
+
+  public List<String> getOwnerList(String vin)
+      throws SQLException, IOException {
+    String query = SQL.getSQL("owner-query");
+    Connection carsConnection = carsSource.getConnection();
+    try {
+      PreparedStatement statement =
+          carsConnection.prepareStatement(query);
+      statement.setString(1, vin);
+      ResultSet resultSet = statement.executeQuery();
+      return buildList(resultSet, "name");
+    } finally {
+      carsConnection.close();
+    }
+  }
+
+}
